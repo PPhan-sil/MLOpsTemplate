@@ -1,0 +1,49 @@
+---
+services:
+  python:
+    container_name: ${COMPOSE_PROJECT_NAME}_dev
+    build:
+      context: ./docker/python
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION}
+        - DEBIAN_VERSION=${DEBIAN_VERSION}
+    image: "pphan-sil/python:1.0"
+    ports:
+      - "${JUPYTER_HOST_PORT}:${JUPYTER_PORT}"
+    environment:
+      - GRANT_SUDO="yes"
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./src:/app
+      - ./src/models:${MLFLOW_ARTIFACT_STORE}:rw
+    depends_on:
+      - mlflow-server
+
+  mlflow-server:
+    container_name: ${COMPOSE_PROJECT_NAME}_mlflow-server
+    build:
+      context: ./docker/mlflow
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION}
+        - DEBIAN_VERSION=${DEBIAN_VERSION}
+        - MLFLOW_VERSION=${MLFLOW_VERSION}
+        - MLFLOW_SERVER_PORT=${MLFLOW_SERVER_PORT}
+    image: "pphan-sil/mlflow-server:1.0"
+    environment:
+      - MLFLOW_BACKEND_STORE=${MLFLOW_BACKEND_STORE}
+      - MLFLOW_ARTIFACT_STORE=${MLFLOW_ARTIFACT_STORE}
+    expose:
+      - "${MLFLOW_SERVER_PORT}"
+    ports:
+      - "${MLFLOW_SERVER_HOST_PORT}:${MLFLOW_SERVER_PORT}"
+    volumes:
+      - ./src/mlruns:${MLFLOW_BACKEND_DIR}:rw
+      - ./src/models:${MLFLOW_ARTIFACT_STORE}:ro

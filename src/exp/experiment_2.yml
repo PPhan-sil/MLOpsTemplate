@@ -1,0 +1,9 @@
+# Experiment 2
+args:
+  name: "exp2"
+  batch_size: 64
+  val_batch_size: 1000
+  epochs: 5
+  lr: 0.01
+  trials: 3
+  save: True
