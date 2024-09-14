@@ -1,6 +1,8 @@
 import os
 import argparse
+import random
 import yaml
+import numpy as np
 import multiprocessing as mp
 import mlflow
 import torch
@@ -91,8 +93,19 @@ def parse_arguments():
     parser.add_argument("--lr", "-lr", type=float, default=1e-3)
     parser.add_argument("--trials", "-t", type=int, default=1)
     parser.add_argument("--save", "-s", type=bool, default=False)
+    parser.add_argument("--seed", type=int, default=10)
     args = parser.parse_args()
     return args
+
+
+def set_all_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    return f"Set all the seeds to {seed} successfully!"
 
 
 if __name__ == "__main__":
@@ -108,6 +121,7 @@ if __name__ == "__main__":
                 if config in params:
                     params[config] = yaml_config["args"][config]
     print(params)
+    print(set_all_seed(params["seed"]))
 
     trainloader, testloader = load_data(**params)
 
